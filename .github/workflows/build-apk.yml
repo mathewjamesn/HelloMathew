@@ -1,0 +1,40 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Generate React Native project
+        run: npx @react-native-community/cli@latest init HelloMathew --version 0.81.4 --skip-git-init --pm npm
+
+      - name: Copy our App.tsx into the generated project
+        run: cp App.tsx HelloMathew/App.tsx
+
+      - name: Build release APK
+        working-directory: HelloMathew/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-mathew-apk
+          path: HelloMathew/android/app/build/outputs/apk/release/app-release.apk
